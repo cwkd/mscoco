@@ -83,7 +83,7 @@ class MSCOCODataset(Dataset.CocoCaptions):
     def __getitem__(self, index):
 #         image, target = super().__getitem__(self, index)
         ann_id = self.ids[index]
-        print(ann_id)
+        #print(ann_id)
         caption = self.coco.anns[ann_id]['caption']
         img_id = self.coco.anns[ann_id]['image_id']
         path = self.coco.loadImgs(img_id)[0]['file_name']
@@ -93,7 +93,7 @@ class MSCOCODataset(Dataset.CocoCaptions):
              # Convert caption (string) to word ids.
         tokens = nltk.tokenize.word_tokenize(str(caption).lower())
         caption = []
-        print(tokens)
+        #print(tokens)
         caption.append(self.vocab('<start>'))
         caption.extend([self.vocab(token) for token in tokens])
         caption.append(self.vocab('<end>'))
@@ -116,7 +116,7 @@ def one_hot_encode(arr, n_labels):#inputs a list, and the number of words in the
     one_hot = one_hot.reshape((*arr.shape, n_labels))
     
     return one_hot #returns a numpy array
-def un_one_hot_encode(one_hot)
+def un_one_hot_encode(one_hot):
     lst = [np.where(r==1)[0][0] for r in one_hot]
     return lst #retursn a list from numpy array
 def main():

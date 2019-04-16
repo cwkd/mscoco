@@ -18,27 +18,29 @@ class Encoder(nn.Module):
     def forward(self, x):
         with torch.no_grad():
             features = self.cnn(x)
-        return features    
+        return features
 
 class Decoder(nn.Module):
     
-    def __init__(self, feat_size, embded_size, vocab_size, hidden_size, num_layers=1):
+    def __init__(self, feat_size, embed_size, vocab_size, hidden_size, num_layers=1):
         super().__init__()
-        self.embed = nn.Embdedding(vocab_size, embed_size)
+        self.embed = nn.Embedding(vocab_size, embed_size)
         self.rnn = nn.LSTM(feat_size + embed_size, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, vocab_size)
         self.feat_size = feat_size
-        self.embded_size = embded_size
+        self.embed_size = embed_size
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         
     def forward(self, features, captions):
         embeddings  = self.embed(captions)
-        inputs = torch.cat((features, embeddings), 1)
+        #print(features.shape, captions.shape, embeddings.shape)
+        inputs = torch.cat((features, embeddings), 2)
+        #print(inputs.shape)
         hidden, (hs, cs) = self.rnn(inputs)
         outputs = self.fc(hidden)
-        return outputs
+        return outputs, (hs, cs)
         
     def init_hidden(self):
         return torch.zeros(self.num_layers, 1, self.hidden_size)
