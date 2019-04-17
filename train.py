@@ -82,6 +82,7 @@ def train(max_epochs=10, encoder= None, model=None, train_loader=None, val_loade
                 features = encoder(data).unsqueeze(0)
                 features = features.repeat([1, gt.shape[1], 1])
                 output, (hidden, cs) = model(features, target)
+                output = softmax(output)
                 #target, _ = nn.utils.rnn.pad_packed_sequence(target, batch_first=True)
                 #data, _ = nn.utils.rnn.pad_packed_sequence(data, batch_first=True)
                 loss = 0
