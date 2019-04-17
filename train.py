@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# In[1]:
-
-
 import os, sys
 
 import torch
@@ -23,10 +19,6 @@ import matplotlib.pyplot as plt
 
 torch.manual_seed(42)
 np.random.seed(42)
-
-
-# In[2]:
-
 
 def train(max_epochs=10, encoder= None, model=None, train_loader=None, val_loader=None, 
           optimizer=None, loss_fn=None, vocab_size=None, verbose=False, print_every=2000):
@@ -123,11 +115,7 @@ def train(max_epochs=10, encoder= None, model=None, train_loader=None, val_loade
         #sample(model, temp)
     return train_losses, val_losses, val_accuracies
 
-
-# In[3]:
-
-
-def main(max_epochs=1, batch_size=1, lr=1e-4):
+def main(max_epochs=20, batch_size=1, lr=1e-4):
     with open('vocab.pkl', 'rb') as f:
         vocab = pickle.load(f)
         
@@ -193,15 +181,7 @@ def main(max_epochs=1, batch_size=1, lr=1e-4):
     np.save('./val_losses.npy',train_losses)
     np.save('./val_accs.npy',train_losses)
 
-
-# In[4]:
-
-
 main()
-
-
-# In[ ]:
-
 
 
 
