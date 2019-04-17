@@ -128,13 +128,13 @@ def main(max_epochs=20, batch_size=1, lr=1e-4):
                                     transforms.ToTensor(),])
     
     
-    trainset = MSCOCODataset(root = './train2014/train2014/',
-                            annFile = './annotations_trainval2014/annotations/captions_train2014.json',
+    trainset = MSCOCODataset(root = './train2014/',
+                            annFile = './annotations/captions_train2014.json',
                             transform=transform, vocab=vocab)
     print('Number of training samples: ', len(trainset))
     
     valset = MSCOCODataset(root = './val2014/',
-                            annFile = './annotations_trainval2014/annotations/captions_val2014.json',
+                            annFile = './annotations/captions_val2014.json',
                             transform=transform, vocab=vocab)
 
     
