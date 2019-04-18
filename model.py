@@ -42,8 +42,12 @@ class Decoder(nn.Module):
         outputs = self.fc(hidden)
         return outputs, (hs, cs)
         
-    def init_hidden(self):
-        return torch.zeros(self.num_layers, 1, self.hidden_size)
+    def init_hidden(self,hc=None):
+        if hc == None:
+            self.h0 = torch.zeros(self.num_layers,1,self.hidden_size)
+            self.c0 = torch.zeros(self.num_layers,1,self.hidden_size)
+        else:
+            self.h0,self.c0 = hc
         
     def sample(self, features, caption, states=None, max_len=20):
         sampled = []
