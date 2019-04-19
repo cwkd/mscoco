@@ -101,6 +101,10 @@ class MSCOCODataset(Dataset.CocoCaptions):
         return image, caption #caption returns as a lst of indiced words from vocab i.e. [1, 4, 12, 27, 14, 4, 15, 7, 28, 29, 2]
         #image is returned as a tensor. I disabled target just in case. 
     def __len__(self):
+#        if 'train' in self.root:
+#            return 75
+#        else:
+#            return 25
         return len(self.ids)
 
 def one_hot_encode(arr, n_labels):#inputs a list, and the number of words in the vocab list

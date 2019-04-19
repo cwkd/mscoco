@@ -16,6 +16,8 @@ from model import Encoder, Decoder
 from dataloader2 import Vocabulary, MSCOCODataset, one_hot_encode, un_one_hot_encode
 import pickle
 import matplotlib.pyplot as plt
+import nltk
+nltk.download('punkt')
 
 torch.manual_seed(42)
 np.random.seed(42)
@@ -27,7 +29,7 @@ def train(max_epochs=10, encoder= None, model=None, train_loader=None, val_loade
     device = torch.device('cuda')
     model.to(device)
     softmax = nn.LogSoftmax(dim=1)
-    loss = 0
+    best_loss = None
     
     for epoch in range(max_epochs):
         model.train()
@@ -56,7 +58,7 @@ def train(max_epochs=10, encoder= None, model=None, train_loader=None, val_loade
             #print(pred.shape, target.shape)
             #correct += pred.eq(target.view_as(pred)).sum().item()
             if verbose and batch_idx*batch_size % print_every < batch_size:
-                print('Batch Number: {}\t\t[{}/{}\t({:.3f}%)]\tLoss: {:.6f}'.format(
+                toLog('Batch Number: {}\t\t[{}/{}\t({:.3f}%)]\tLoss: {:.6f}'.format(
                         batch_idx + 1, (batch_idx +1)* train_loader.batch_size, len(train_loader),
                         100. * batch_idx / (len(train_loader)/train_loader.batch_size), loss.item()))
             loss.backward()
@@ -66,7 +68,7 @@ def train(max_epochs=10, encoder= None, model=None, train_loader=None, val_loade
             
         train_losses.append(loss.item())
         
-        print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+        toLog('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\n'.format(
             epoch + 1, (batch_idx+1) * train_loader.batch_size, len(train_loader),
             100. * batch_idx / (len(train_loader)/train_loader.batch_size), loss.item()))
         
@@ -102,30 +104,43 @@ def train(max_epochs=10, encoder= None, model=None, train_loader=None, val_loade
             val_loss /= len(val_loader)
             val_losses.append(val_loss)
 
-            #if val_loss < best_loss[0]:
-            #    print('\nSaving model parameters in epoch {}'.format(epoch+1))
-            #    torch.save(model.state_dict(), "./temp_model.pt")
-            #    best_loss[0] = val_loss
-            #    save_flag = True
-
             val_acc = 100. * correct / total
             val_accuracies.append(val_acc)
 
-            print('Val set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
+            toLog('Val set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)'.format(
                 val_loss, correct, total,
                 val_acc))
+            
+            if best_loss is None:
+                toLog('Saving model parameters in epoch {}'.format(epoch+1))
+                torch.save(model.state_dict(), "./temp_model.pt")
+                best_loss = val_loss
+#                save_flag = True
+            elif val_loss < best_loss:
+                toLog('Saving model parameters in epoch {}'.format(epoch+1))
+                torch.save(model.state_dict(), "./temp_model.pt")
+                best_loss = val_loss
+#                save_flag = True
+            
+            toLog('')
             
         #sample(model, temp)
     return train_losses, val_losses, val_accuracies
 
-def main(max_epochs=20, batch_size=1, lr=1e-4):
+def toLog(string):
+    print(string)
+    with open('log.txt','a') as f:
+        f.write(string)
+        f.write('\n')
+
+def main(max_epochs=5, batch_size=1, lr=1e-4):
     with open('vocab.pkl', 'rb') as f:
         vocab = pickle.load(f)
         
     vocab_size = len(vocab)
     #print(vocab.word2idx['<end>'])
     
-    print('Vocab Size: {}'.format(vocab_size))
+    toLog('Vocab Size: {}'.format(vocab_size))
     transform = transforms.Compose([transforms.Resize(224),
                                     transforms.CenterCrop(224),
                                     transforms.ToTensor(),])
@@ -134,14 +149,14 @@ def main(max_epochs=20, batch_size=1, lr=1e-4):
     trainset = MSCOCODataset(root = './train2014/',
                             annFile = './annotations/captions_train2014.json',
                             transform=transform, vocab=vocab)
-    print('Number of training samples: ', len(trainset))
+    toLog('Number of training samples: {}'.format(len(trainset)))
     
     valset = MSCOCODataset(root = './val2014/',
                             annFile = './annotations/captions_val2014.json',
                             transform=transform, vocab=vocab)
 
     
-    print('Number of validation samples: ', len(valset))
+    toLog('Number of validation samples: {}'.format(len(valset)))
     
     device = torch.device('cuda')
     encoder = Encoder().to(device)
@@ -161,21 +176,28 @@ def main(max_epochs=20, batch_size=1, lr=1e-4):
     torch.save(best_model_wts,'./model.pt')
 
     epochs = np.arange(1, max_epochs+1)
+    
+    
+    fig1 = plt.figure(figsize=(15,5))
+    fig1.add_subplot(121)
     plt.xticks(epochs)
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.plot(epochs, train_losses, epochs, val_losses)
     plt.legend(['Training', 'Validation'],loc='upper right')
     plt.title('Training and Validation Loss per epoch')
-    plt.show()
+#    plt.show()
 
+    fig1.add_subplot(122)
     plt.xticks(epochs)
     plt.xlabel("Epoch")
     plt.ylabel("Accuracy")
     plt.plot(epochs, val_accs)
     plt.legend(['Validation'],loc='upper right')
     plt.title('Validation Accuracy per epoch')
-    plt.show()
+#    plt.show()
+    
+    fig1.savefig("plots.png")
     
     train_losses = np.asarray(train_losses)
     val_losses = np.asarray(val_losses)
