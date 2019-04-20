@@ -28,7 +28,7 @@ def train(max_epochs=10, encoder= None, model=None, train_loader=None, val_loade
     batch_size = train_loader.batch_size
     device = torch.device('cuda')
     model.to(device)
-    softmax = nn.LogSoftmax(dim=1)
+    softmax = nn.LogSoftmax(dim=2)
     best_loss = None
     
     for epoch in range(max_epochs):
