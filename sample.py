@@ -31,7 +31,7 @@ decoder = Decoder(feat_size=4096, embed_size=1000,
                   num_layers=3).to(device)
 
 print('Loading model')
-decoder.load_state_dict(torch.load('6_model.pt'))
+decoder.load_state_dict(torch.load('3_model.pt'))
 
 transform = transforms.Compose([transforms.Resize(224),
                                     transforms.CenterCrop(224),
@@ -54,16 +54,11 @@ def get_caption_from_idx(valset, index):
     caption = valset.coco.anns[ann_id]['caption']
     return caption
     
-
-for index, (data, target) in enumerate(val_loader):
-    if index > 5:
-        break
-        
+outfile = open('captions.txt', 'a')
+for index, (data, target) in enumerate(val_loader):        
     #print(target)
     path = get_path_from_idx(valset, index)
     caption = get_caption_from_idx(valset, index)
-    print(path)
-    print(caption)
     
     data = data.to(device)
     
@@ -72,4 +67,7 @@ for index, (data, target) in enumerate(val_loader):
     output = decoder.sample(img_feat, start)
     output = [vocab.idx2word[e.item()] for e in output]
     output = ' '.join(output)
-    print(output)
+    line = '{}_{}_{}'.format(path, caption, output)
+    outfile.write()
+    
+outfile.close()
