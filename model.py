@@ -52,11 +52,22 @@ class Decoder(nn.Module):
     def sample(self, features, caption, states=None, max_len=20):
         sampled = []
         for i in range(max_len):
-            input = self.embed(features, caption)
+            embedded = self.embed(caption)
+            #print(features.shape, caption.shape, embedded.shape)
+            input = torch.cat((features, embedded), 2)
             hidden, states = self.rnn(input, states)
-            caption = self.fc(hidden.squeeze(1))
-            pred = output.argmax(1)
-            sampled.append(pred.item())
+            output = self.fc(hidden.squeeze(1))
+            #probs = F.softmax(output, dim=1).squeeze(0).detach().cpu().numpy()
+            #pred = np.random.choice(range(len(probs)), 1,p=probs)
+            #caption = torch.Tensor(pred).long()
+            caption = output.argmax(1)
+            
+            #print(caption)
+            #sampled.append(caption)
+            sampled.append(caption.cpu())
+            if caption.item() == 2: #EOS
+                break
+            caption = caption.unsqueeze(0).cuda()
         return sampled
         
     #def beam_search(self, features, caption, states=None, max_len=20, beam_width=5):
