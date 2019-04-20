@@ -38,7 +38,7 @@ class Decoder(nn.Module):
         #print(features.shape, captions.shape, embeddings.shape)
         inputs = torch.cat((features, embeddings), 2)
         #print(inputs.shape)
-        hidden, (hs, cs) = self.rnn(inputs)
+        hidden, (hs, cs) = self.rnn(inputs,(self.h0,self.c0))
         outputs = self.fc(hidden)
         return outputs, (hs, cs)
         
