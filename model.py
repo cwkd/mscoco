@@ -39,6 +39,14 @@ class Decoder(nn.Module):
         inputs = torch.cat((features, embeddings), 2)
         #print(inputs.shape)
         hidden, (hs, cs) = self.rnn(inputs,(self.h0,self.c0))
+        
+        hiddens = hidden.squeeze(0)
+        outputs1 = self.fc(hidden)
+        outputs2 = self.fc(hiddens)
+        outputs2 = outputs2.unsqueeze(0)
+        outputs = outputs1
+        print(torch.eq(outputs1,outputs2).min())
+        
         outputs = self.fc(hidden)
         return outputs, (hs, cs)
         
@@ -56,6 +64,14 @@ class Decoder(nn.Module):
             #print(features.shape, caption.shape, embedded.shape)
             input = torch.cat((features, embedded), 2)
             hidden, states = self.rnn(input, states)
+            
+            hiddens = hidden.squeeze(0)
+            outputs1 = self.fc(hidden)
+            outputs2 = self.fc(hiddens)
+            outputs2 = outputs2.unsqueeze(0)
+            outputs = outputs1
+            print(torch.eq(outputs1,outputs2).min())
+            
             output = self.fc(hidden.squeeze(1))
             #probs = F.softmax(output, dim=1).squeeze(0).detach().cpu().numpy()
             #pred = np.random.choice(range(len(probs)), 1,p=probs)
