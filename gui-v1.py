@@ -86,6 +86,26 @@ class Decoder(nn.Module):
         else:
             self.h0,self.c0 = hc
 
+    def sample(self, features, caption, states=None, max_len=20):
+        sampled = []
+        for i in range(max_len):
+            embedded = self.embed(caption)
+            #print(features.shape, caption.shape, embedded.shape)
+            input = torch.cat((features, embedded), 2)
+            hidden, states = self.rnn(input, states)
+            output = self.fc(hidden.squeeze(1))
+            #probs = F.softmax(output, dim=1).squeeze(0).detach().cpu().numpy()
+            #pred = np.random.choice(range(len(probs)), 1,p=probs)
+            #caption = torch.Tensor(pred).long()
+            caption = output.argmax(1)
+            
+            #print(caption)
+            #sampled.append(caption)
+            sampled.append(caption.cpu())
+            if caption.item() == 2: #EOS
+                break
+            caption = caption.unsqueeze(0).to(self.device)
+        return sampled
 
 class Demonstrator(Tk):
     def __init__(self):
@@ -244,20 +264,24 @@ class PredictTab(Frame):
         
         self.model.eval()
         with torch.no_grad():
-            features = self.encoder(data).repeat([1, 1, 1])
-            self.model.init_hidden()
-            for i in range(14): # Just in case our model never produces EOS
-                output,_ = self.model(features, idx)
-#                output = self.softmax(output)
-                output = F.log_softmax(output,dim=2)
-#                print(output.max())
-                idx = output.argmax().view((1,1))
-                if idx.item() == self.vocab('<end>'):
-                    break
-                else:
-                    caption += self.vocab.idx2word[idx.item()] + ' '
-            caption = caption.capitalize()
-            caption = caption[:-1] + '.'
+            img_feat = self.encoder(data).unsqueeze(0)
+            output = self.model.sample(img_feat, idx)
+            output = [self.vocab.idx2word[e.item()] for e in output]
+            caption = ' '.join(output)
+#            features = self.encoder(data).repeat([1, 1, 1])
+#            self.model.init_hidden()
+#            for i in range(20): # Just in case our model never produces EOS
+#                output,_ = self.model(features, idx)
+##                output = self.softmax(output)
+#                output = F.log_softmax(output,dim=2)
+##                print(output.max())
+#                idx = output.argmax().view((1,1))
+#                if idx.item() == self.vocab('<end>'):
+#                    break
+#                else:
+#                    caption += self.vocab.idx2word[idx.item()] + ' '
+#            caption = caption.capitalize()
+#            caption = caption[:-1] + '.'
         return caption
     
     def predictForImage(self):
@@ -367,15 +391,16 @@ class BrowseTab(Frame):
 
         # Get image names and list of numbers as in directory.
         self.image_names = parent.img_names
-        self.img_nums = []
+        self.img_nums = {}
         
-        for name in self.image_names:
-            self.img_nums.append(name[name.rfind('_')+1:-4].lstrip('0'))
-            
+        for i in range(len(self.image_names)):
+            name = self.image_names[i]
+            self.img_nums[i] = name[name.rfind('_')+1:-4].lstrip('0')
+        
         # Load captions from file.
-        self.captions = ['Putin Learns Putin Behind Plot To Assassinate Putin Putin Learns Putin Behind Plot To Assassinate Putin']*(len(self.image_names)//2)
-        shorterthan80 = ['Putin Learns Putin Behind Plot To Assassinate Putin']*(len(self.image_names)-len(self.captions))
-        self.captions.extend(shorterthan80)
+        caption_file = os.path.join('captions4.txt')
+        with open(caption_file,'r') as file:
+            self.captions = file.readlines()
         
 #        self.canv = Frame(self)
         self.canvas = Canvas(self, borderwidth=0, background="#ffffff")
